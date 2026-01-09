@@ -237,7 +237,7 @@ end
 - `Boolean` - Accepts `true`/`false`) [UNRELEASED]
 - `Enum` - Usage: `Enum[1, 2, 3]` [[CONCEPT STAGE](https://github.com/low-rb/low_type/issues/6)]
 - `Tuple` (subclass of `Array`)
-- `Status` (subclass of `Integer`) - TODO: Check integer to be a valid HTTP status code
+- `Status` (subclass of `Integer`)
 - `Headers` (subclass of `Hash`)
 - `HTML` (subclass of `String`) - TODO: Check that string is HTML
 - `JSON` (subclass of `String`) - TODO: Check that string is JSON
@@ -333,4 +333,4 @@ end
 
 🌀 **Less DSL. More types.** As much as possible LowType looks just like Ruby if it had types. There's no special method calls for the base functionality, and defining types at runtime simply uses a `type()` method which almost looks like a `type` keyword, had Ruby implemented types.
 
-🤖 **AI makes you dumb.** AI is theoretically a cool concept but in practice capitalism just uses it to steal wealth.
+💡 **Dedicated to David.** A kind person and an electrical engineer who I'll never be as smart as. WTF even is electricity?
