@@ -6,7 +6,6 @@ require_relative 'adapters/adapter_loader'
 require_relative 'definitions/redefiner'
 require_relative 'definitions/type_accessors'
 require_relative 'expressions/expressions'
-require_relative 'queries/file_parser'
 require_relative 'queries/file_query'
 require_relative 'syntax/syntax'
 require_relative 'types/complex_types'
@@ -26,14 +25,15 @@ module LowType
     return unless File.exist?(file_path)
 
     file_proxy = Lowkey.load(file_path:)
+    class_proxy = file_proxy.definitions[klass.name]
 
     klass.extend Low::TypeAccessors
     klass.include Low::Types
     klass.include Low::Expressions
-    klass.prepend Low::Redefiner.redefine(method_nodes: file_proxy.instance_methods, class_proxy: file_proxy.class_proxy, klass:, file_path:)
-    klass.singleton_class.prepend Low::Redefiner.redefine(method_nodes: file_proxy.class_methods, class_proxy: file_proxy.class_proxy, file_path:)
+    klass.prepend Low::Redefiner.redefine(method_nodes: class_proxy.instance_methods, class_proxy:, klass:)
+    klass.singleton_class.prepend Low::Redefiner.redefine(method_nodes: class_proxy.class_methods, class_proxy:, klass:)
 
-    if (adapter = Low::Adapter::Loader.load(klass:, file_proxy:, file_path:))
+    if (adapter = Low::Adapter::Loader.load(klass:, class_proxy:))
       adapter.process
       klass.prepend Low::Adapter::Methods
     end

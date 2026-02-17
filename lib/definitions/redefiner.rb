@@ -10,8 +10,8 @@ module Low
   # Redefine methods to have their arguments and return values type checked.
   class Redefiner
     class << self
-      def redefine(method_nodes:, class_proxy:, klass:, file_path:)
-        method_proxies = build_methods(method_nodes:, klass:, file_path:)
+      def redefine(method_nodes:, class_proxy:, klass:)
+        method_proxies = build_methods(method_nodes:, klass:, file_path: class_proxy.file_path)
 
         if LowType.config.type_checking
           typed_methods(method_proxies:, class_proxy:, klass:)
@@ -44,11 +44,12 @@ module Low
       def build_methods(method_nodes:, klass:, file_path:)
         method_nodes.each do |name, method_node|
           begin # rubocop:disable Style/RedundantBegin
-            file = ProxyFactory.file_proxy(path: file_path, node: method_node, scope: "#{klass}##{name}")
+            name = method_node.name
+            scope = name
 
-            param_proxies = ProxyFactory.param_proxies(method_node:, file:)
-            return_proxy = ProxyFactory.return_proxy(method_node:, file:, name: method_node.name)
-            method_proxy = MethodProxy.new(name:, params: param_proxies, return_proxy:, file:)
+            param_proxies = ProxyFactory.param_proxies(method_node:, file_path:, scope:)
+            return_proxy = ProxyFactory.return_proxy(method_node:, name:, file_path:, scope:)
+            method_proxy = MethodProxy.new(file_path:, start_line: method_node.start_line, scope:, name:, params: param_proxies, return_proxy:)
 
             Repository.save(method: method_proxy, klass:)
           # When we can't parse the method's params or return type then skip it.
@@ -121,8 +122,9 @@ module Low
       end
 
       def method_within_class_bounds?(method_proxy:, class_proxy:, klass:)
-        within_bounds = method_proxy.start_line > class_proxy.start_line && method_proxy.end_line <= class_proxy.end_line
-        if method_proxy.lines? && class_proxy.lines? && !within_bounds
+        within_bounds = method_proxy.start_line > class_proxy.start_line && method_proxy.start_line <= class_proxy.end_line
+
+        unless within_bounds
           Low::Repository.delete(name: method_proxy.name, klass:)
           return false
         end

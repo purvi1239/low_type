@@ -14,29 +14,33 @@ module Low
       def initialize(klass:, class_proxy:)
         @klass = klass
         @class_proxy = class_proxy
-        @file_path = file_path
+        @file_path = class_proxy.file_path
       end
 
       def process # rubocop:disable Metrics/AbcSize
-        file_path = @class_proxy.file_proxy.file_path
         method_calls = @class_proxy.method_calls(%i[get post patch put delete options query])
 
         # Type check return values.
-        method_calls.each do |method_call|
-          arguments_node = method_call.compact_child_nodes.first
+        method_calls.each do |method_node|
+          arguments_node = method_node.compact_child_nodes.first
           next unless arguments_node.is_a?(Prism::ArgumentsNode)
 
           pattern = arguments_node.arguments.first.content
           name = "#{method_node.name.upcase} #{pattern}"
-          start_line = method_call.start_line
+          scope = name
+          start_line = method_node.start_line
 
-          next unless (return_proxy = ProxyFactory.return_proxy(method_node: method_call, name:, file_path:, start_line:, scope: pattern))
+          next unless (return_proxy = ProxyFactory.return_proxy(method_node:, name:, file_path:, scope: pattern))
 
-          route = "#{method_call.name.upcase} #{pattern}"
-          params = [ParamProxy.new(expression: nil, name: :route, type: :req, position: 0, file_path:)]
-          @klass.low_methods[route] = MethodProxy.new(name: method_call.name, params:, return_proxy:)
+          route = "#{method_node.name.upcase} #{pattern}"
+          params = [ParamProxy.new(expression: nil, name: :route, type: :req, file_path:, start_line:, scope:, position: 0)]
+          @klass.low_methods[route] = MethodProxy.new(file_path:, start_line:, scope:, name: method_node.name, params:, return_proxy:)
         end
       end
+
+      private
+
+      attr_reader :file_path
     end
 
     module Methods

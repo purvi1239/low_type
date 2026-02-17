@@ -2,10 +2,13 @@
 
 module Low
   class MethodProxy
+    attr_reader :file_path, :start_line, :scope
     attr_reader :name, :params, :return_proxy
 
     def initialize(file_path:, start_line:, scope:, name:, params: [], return_proxy: nil)
-      super(file_path:, start_line:, scope:)
+      @file_path = file_path
+      @start_line = start_line
+      @scope = scope
 
       @name = name
       @params = params
