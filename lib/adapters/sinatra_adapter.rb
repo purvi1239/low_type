@@ -11,41 +11,37 @@ module Low
   module Adapter
     # We don't use https://sinatrarb.com/extensions.html because we need to type check all Ruby methods (not just Sinatra) at a lower level.
     class Sinatra < AdapterInterface
-      def initialize(klass:, parser:, file_path:)
+      def initialize(klass:, class_proxy:)
         @klass = klass
-        @parser = parser
-        @file_path = file_path
+        @class_proxy = class_proxy
+        @file_path = class_proxy.file_path
       end
 
       def process # rubocop:disable Metrics/AbcSize
-        method_calls = @parser.method_calls(method_names: %i[get post patch put delete options query])
+        method_calls = @class_proxy.method_calls(%i[get post patch put delete options query])
 
         # Type check return values.
-        method_calls.each do |method_call|
-          arguments_node = method_call.compact_child_nodes.first
+        method_calls.each do |method_node|
+          arguments_node = method_node.compact_child_nodes.first
           next unless arguments_node.is_a?(Prism::ArgumentsNode)
 
           pattern = arguments_node.arguments.first.content
+          name = "#{method_node.name.upcase} #{pattern}"
+          scope = name
+          start_line = method_node.start_line
 
-          file = ProxyFactory.file_proxy(node: method_call, path: @file_path, scope: "#{@klass}##{method_call.name}")
-          next unless (return_proxy = return_proxy(method_node: method_call, pattern:, file:))
+          next unless (return_proxy = ProxyFactory.return_proxy(method_node:, name:, file_path:, scope: pattern))
 
-          route = "#{method_call.name.upcase} #{pattern}"
-          params = [ParamProxy.new(expression: nil, name: :route, type: :req, position: 0, file:)]
-          @klass.low_methods[route] = MethodProxy.new(name: method_call.name, params:, return_proxy:)
+          route = "#{method_node.name.upcase} #{pattern}"
+          name = method_node.name
+          param_proxies = [ParamProxy.new(expression: nil, name: :route, type: :req, file_path:, start_line:, scope:, position: 0)]
+          @klass.low_methods[route] = MethodProxy.new(file_path:, start_line:, scope:, name:, param_proxies:, return_proxy:)
         end
       end
 
-      def return_proxy(method_node:, pattern:, file:)
-        return_type = FileParser.return_type(method_node:)
-        return nil if return_type.nil?
+      private
 
-        # Not a security risk because the code comes from a trusted source; the file that did the include. Does the file trust itself?
-        expression = eval(return_type.slice).call # rubocop:disable Security/Eval
-        expression = TypeExpression.new(type: expression) unless expression.is_a?(TypeExpression)
-
-        ReturnProxy.new(type_expression: expression, name: "#{method_node.name.upcase} #{pattern}", file:)
-      end
+      attr_reader :file_path
     end
 
     module Methods

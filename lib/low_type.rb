@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
+require 'lowkey'
+
 require_relative 'adapters/adapter_loader'
 require_relative 'definitions/redefiner'
 require_relative 'definitions/type_accessors'
 require_relative 'expressions/expressions'
-require_relative 'queries/file_parser'
 require_relative 'queries/file_query'
 require_relative 'syntax/syntax'
 require_relative 'types/complex_types'
@@ -23,15 +24,16 @@ module LowType
     file_path = Low::FileQuery.file_path(klass:)
     return unless File.exist?(file_path)
 
-    parser = Low::FileParser.new(klass:, file_path:)
+    file_proxy = Lowkey.load(file_path:)
+    class_proxy = file_proxy.definitions[klass.name]
 
     klass.extend Low::TypeAccessors
     klass.include Low::Types
     klass.include Low::Expressions
-    klass.prepend Low::Redefiner.redefine(method_nodes: parser.instance_methods, class_proxy: parser.class_proxy, file_path:)
-    klass.singleton_class.prepend Low::Redefiner.redefine(method_nodes: parser.class_methods, class_proxy: parser.class_proxy, file_path:)
+    klass.prepend Low::Redefiner.redefine(method_nodes: class_proxy.instance_methods, class_proxy:, klass:)
+    klass.singleton_class.prepend Low::Redefiner.redefine(method_nodes: class_proxy.class_methods, class_proxy:, klass:)
 
-    if (adapter = Low::Adapter::Loader.load(klass:, parser:, file_path:))
+    if (adapter = Low::Adapter::Loader.load(klass:, class_proxy:))
       adapter.process
       klass.prepend Low::Adapter::Methods
     end

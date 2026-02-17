@@ -21,6 +21,13 @@ Minor features that don't break backwards compatibility are released as patches.
 - Complex types validation
 - Error mode config
 
+## 1.1.9
+
+### Changed
+
+- Lowkey dependency
+- Move parser, file proxy and class proxy to lowkey
+
 ## 1.1.3
 
 ### Added

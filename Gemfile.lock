@@ -10,13 +10,20 @@ PATH
       expressions (~> 0.1)
 
 PATH
+  remote: ../lowkey
+  specs:
+    lowkey (0.2.1)
+      prism
+
+PATH
   remote: .
   specs:
-    low_type (1.1.8)
+    low_type (1.1.9)
       expressions (~> 0.1)
+      lowkey (~> 0.2)
 
 GEM
-  remote: https://rubygems.org/
+  remote: https://gem.coop/
   specs:
     ast (2.4.3)
     base64 (0.3.0)
@@ -102,6 +109,7 @@ DEPENDENCIES
   expressions!
   low_dependency!
   low_type!
+  lowkey!
   pry
   pry-nav
   rack

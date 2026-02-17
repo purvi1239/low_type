@@ -5,7 +5,8 @@ require 'pry-nav'
 require_relative '../../lib/low_type'
 require_relative '../../lib/types/complex_types'
 
-include Low::Types
+# Access types in tests without requiring them.
+include Low::Types # rubocop:disable Style/MixinUsage
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

@@ -1,20 +1,17 @@
 # frozen_string_literal: true
 
-require 'forwardable'
-
 module Low
   class MethodProxy
-    extend Forwardable
+    attr_reader :file_path, :start_line, :scope, :name, :param_proxies, :return_proxy
 
-    attr_reader :name, :file, :params, :return_proxy
+    # TODO: Refactor file path, start line and scope into "meta scope" model.
+    def initialize(file_path:, start_line:, scope:, name:, param_proxies: [], return_proxy: nil) # rubocop:disable Metrics/ParameterLists
+      @file_path = file_path
+      @start_line = start_line
+      @scope = scope
 
-    # File is queried by redefiner but not sinatra adapter nor type accessors.
-    def_delegators :@file, :start_line, :end_line, :lines?
-
-    def initialize(name:, file: nil, params: [], return_proxy: nil)
       @name = name
-      @file = file
-      @params = params
+      @param_proxies = param_proxies
       @return_proxy = return_proxy
     end
   end

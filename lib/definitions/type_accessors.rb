@@ -9,31 +9,37 @@ module Low
     def type_reader(named_expressions)
       named_expressions.each do |name, exp|
         last_caller = caller_locations(1, 1).first
-        file = FileProxy.new(path: last_caller.path, start_line: last_caller.lineno, scope: "#{self}##{name}")
+        file_path = last_caller.path
+        start_line = last_caller.lineno
+        scope = "#{self}##{name}"
 
-        expression = expression(exp)
-        @low_methods[name] = MethodProxy.new(name:, return_proxy: ReturnProxy.new(type_expression: expression, name:, file:))
+        type_expression = type_expression(exp)
+        return_proxy = ReturnProxy.new(type_expression:, name:, file_path:, start_line:, scope:)
+
+        @low_methods[name] = MethodProxy.new(file_path:, start_line:, scope:, name:, return_proxy:)
 
         define_method(name) do
           method_proxy = self.class.low_methods[name]
           value = instance_variable_get("@#{name}")
-          expression.validate!(value:, proxy: method_proxy.return_proxy)
+          type_expression.validate!(value:, proxy: method_proxy.return_proxy)
           value
         end
       end
     end
 
     def type_writer(named_expressions) # rubocop:disable Metrics/AbcSize
-      named_expressions.each do |name, exp|
+      named_expressions.each do |name, expression|
         last_caller = caller_locations(1, 1).first
-        file = FileProxy.new(path: last_caller.path, start_line: last_caller.lineno, scope: "#{self}##{name}")
+        file_path = last_caller.path
+        start_line = last_caller.lineno
+        scope = "#{self}##{name}"
 
-        params = [ParamProxy.new(expression: expression(exp), name:, type: :hashreq, file:)]
-        @low_methods["#{name}="] = MethodProxy.new(name:, params:)
+        param_proxies = [ParamProxy.new(expression: type_expression(expression), name:, type: :hashreq, file_path:, start_line:, scope:)]
+        @low_methods["#{name}="] = MethodProxy.new(file_path:, start_line:, scope:, name:, param_proxies:)
 
         define_method("#{name}=") do |value|
           method_proxy = self.class.low_methods["#{name}="]
-          method_proxy.params.first.expression.validate!(value:, proxy: method_proxy.params.first)
+          method_proxy.param_proxies.first.expression.validate!(value:, proxy: method_proxy.param_proxies.first)
           instance_variable_set("@#{name}", value)
         end
       end
@@ -48,7 +54,7 @@ module Low
 
     private
 
-    def expression(expression)
+    def type_expression(expression)
       if expression.is_a?(::Expressions::Expression)
         expression
       elsif ::Low::TypeQuery.type?(expression)

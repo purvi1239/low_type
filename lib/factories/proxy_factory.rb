@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
 require 'expressions'
+require 'lowkey'
 
 require_relative '../expressions/expressions'
 require_relative '../expressions/type_expression'
-require_relative '../proxies/file_proxy'
 require_relative '../proxies/param_proxy'
 require_relative '../proxies/return_proxy'
-require_relative '../queries/file_parser'
 require_relative '../syntax/syntax'
 require_relative '../types/complex_types'
 require_relative '../types/status'
@@ -20,15 +19,8 @@ module Low
       include Low::Expressions
       include Low::Types
 
-      def file_proxy(node:, path:, scope:)
-        start_line = node.respond_to?(:start_line) ? node.start_line : nil
-        end_line = node.respond_to?(:end_line) ? node.end_line : nil
-
-        FileProxy.new(path:, start_line:, end_line:, scope:)
-      end
-
       # The evals below aren't a security risk because the code comes from a trusted source; the file itself that did the include.
-      def param_proxies(method_node:, file:)
+      def param_proxies(method_node:, file_path:, scope:)
         return [] if method_node.parameters.nil?
 
         params_without_block = method_node.parameters.slice.delete_suffix(', &block')
@@ -38,7 +30,7 @@ module Low
         # Local variable names are prefixed with __lt or __rb where needed to avoid being overridden by method parameters.
         typed_method = <<~RUBY
           -> (#{params_without_block}, __rb_method:, __lt_file:) {
-            param_proxies_for_expressions(ruby_method: __rb_method, file: __lt_file, method_binding: binding)
+            param_proxies_for_expressions(ruby_method: __rb_method, file_path: __lt_file, start_line: method_node.start_line, scope:, method_binding: binding)
           }
         RUBY
 
@@ -46,27 +38,29 @@ module Low
 
         # Called with only required args (as nil) and optional args omitted, to evaluate expressions stored as default values.
         eval(typed_method, binding, __FILE__, __LINE__) # rubocop:disable Security/Eval
-          .call(*required_args, **required_kwargs, __rb_method: ruby_method, __lt_file: file)
+          .call(*required_args, **required_kwargs, __rb_method: ruby_method, __lt_file: file_path)
 
       # TODO: Unit test this.
       rescue ArgumentError => e
         raise ArgumentError, "Incorrect param syntax: #{e.message}"
       end
 
-      def return_proxy(method_node:, file:)
-        return_type = FileParser.return_type(method_node:)
+      def return_proxy(method_node:, name:, file_path:, scope:)
+        return_type = Lowkey::ClassProxy.return_type(method_node:)
         return nil if return_type.nil?
+
+        start_line = method_node.start_line
 
         begin
           # Not a security risk because the code comes from a trusted source; the file that did the include. Does the file trust itself?
           expression = eval(return_type.slice, binding, __FILE__, __LINE__).call # rubocop:disable Security/Eval
         rescue NameError
-          raise NameError, "Unknown return type '#{return_type.slice}' for #{file.scope} at #{file.path}:#{file.start_line}"
+          raise NameError, "Unknown return type '#{return_type.slice}' for #{scope} at #{file_path}:#{start_line}"
         end
 
         expression = TypeExpression.new(type: expression) unless expression.is_a?(TypeExpression)
 
-        ReturnProxy.new(type_expression: expression, name: method_node.name, file:)
+        ReturnProxy.new(type_expression: expression, name:, file_path:, start_line:, scope:)
       end
 
       private
@@ -89,7 +83,7 @@ module Low
         [required_args, required_kwargs]
       end
 
-      def param_proxies_for_expressions(ruby_method:, file:, method_binding:)
+      def param_proxies_for_expressions(ruby_method:, file_path:, start_line:, scope:, method_binding:)
         param_proxies = []
 
         ruby_method.parameters.each_with_index do |param, position|
@@ -110,7 +104,7 @@ module Low
             expression = TypeExpression.new(type: local_variable)
           end
 
-          param_proxies << ParamProxy.new(expression:, name:, type:, position:, file:) if expression
+          param_proxies << ParamProxy.new(expression:, name:, type:, file_path:, start_line:, scope:, position:) if expression
         end
 
         param_proxies
