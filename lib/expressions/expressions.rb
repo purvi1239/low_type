@@ -20,7 +20,7 @@ module Low
 
       value
     rescue NoMethodError
-      raise ConfigError, "Invalid type expression, likely because you didn't add 'using LowType::Syntax'"
+      raise ConfigError, "Invalid type expression. Did you add 'using LowType::Syntax'?"
     end
     alias low_type type
 
