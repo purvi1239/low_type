@@ -15,8 +15,10 @@ module Low
 
         type_expression = type_expression(exp)
         return_proxy = ReturnProxy.new(type_expression:, name:, file_path:, start_line:, scope:)
+        return_proxy = ::Lowkey::ReturnProxy.new(type_expression:, name:, file_path:, start_line:, scope:)
 
         @low_methods[name] = MethodProxy.new(file_path:, start_line:, scope:, name:, return_proxy:)
+        @low_methods[name] = ::Lowkey::MethodProxy.new(file_path:, start_line:, scope:, name:, return_proxy:)
 
         define_method(name) do
           method_proxy = self.class.low_methods[name]
@@ -36,6 +38,7 @@ module Low
 
         param_proxies = [ParamProxy.new(expression: type_expression(expression), name:, type: :hashreq, file_path:, start_line:, scope:)]
         @low_methods["#{name}="] = MethodProxy.new(file_path:, start_line:, scope:, name:, param_proxies:)
+        @low_methods["#{name}="] = ::Lowkey::MethodProxy.new(file_path:, start_line:, scope:, name:, param_proxies:)
 
         define_method("#{name}=") do |value|
           method_proxy = self.class.low_methods["#{name}="]

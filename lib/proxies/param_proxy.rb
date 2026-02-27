@@ -4,23 +4,8 @@ require_relative '../interfaces/error_interface'
 require_relative '../types/error_types'
 
 module Low
+  # Originally defined in Lowtype and re-opened here to add error handling.
   class ParamProxy < ErrorInterface
-    attr_reader :expression, :name, :type, :position
-
-    # TODO: Refactor file path, start line and scope into "meta scope" model.
-    def initialize(expression:, name:, type:, file_path:, start_line:, scope:, position: nil) # rubocop:disable Metrics/ParameterLists
-      super(file_path:, start_line:, scope:)
-
-      @expression = expression
-      @name = name
-      @type = type
-      @position = position
-    end
-
-    def required?
-      @expression.required?
-    end
-
     def error_type
       ArgumentTypeError
     end

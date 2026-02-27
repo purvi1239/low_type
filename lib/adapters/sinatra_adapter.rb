@@ -35,7 +35,7 @@ module Low
           route = "#{method_node.name.upcase} #{pattern}"
           name = method_node.name
           param_proxies = [ParamProxy.new(expression: nil, name: :route, type: :req, file_path:, start_line:, scope:, position: 0)]
-          @klass.low_methods[route] = MethodProxy.new(file_path:, start_line:, scope:, name:, param_proxies:, return_proxy:)
+          @klass.low_methods[route] = ::Lowkey::MethodProxy.new(file_path:, start_line:, scope:, name:, param_proxies:, return_proxy:)
         end
       end
 
