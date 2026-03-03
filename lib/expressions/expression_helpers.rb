@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative '../definitions/evaluator'
+require_relative 'type_expression'
+require_relative 'value_expression'
 require_relative '../proxies/local_proxy'
-require_relative '../types/error_types'
 
 module Low
   module ExpressionHelpers
@@ -25,7 +25,7 @@ module Low
     alias low_type type
 
     def value(type)
-      Evaluator.type_expression_with_value(type:)
+      TypeExpression.new(default_value: ValueExpression.new(value: type))
     end
     alias low_value value
   end

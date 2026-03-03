@@ -27,10 +27,6 @@ module Low
   class Redefiner
     class << self
       def redefine(method_proxies:, class_proxy:, klass:)
-        method_proxies.values.each do |method_proxy|
-          Evaluator.load_method_expressions(method_proxy:)
-        end
-
         if LowType.config.type_checking
           typed_methods(method_proxies:, class_proxy:, klass:)
         else

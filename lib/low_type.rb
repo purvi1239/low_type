@@ -41,6 +41,8 @@ module LowType
     file_proxy = Lowkey.load(file_path:)
     class_proxy = file_proxy[klass.name]
 
+    Low::Evaluator.evaluate(method_proxies: class_proxy.keyed_methods)
+
     klass.extend Low::TypeAccessors
     klass.include Low::Types
     klass.include Low::ExpressionHelpers
