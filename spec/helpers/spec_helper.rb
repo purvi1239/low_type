@@ -2,7 +2,6 @@
 
 require 'pry'
 require 'pry-nav'
-require_relative '../../lib/low_type'
 require_relative '../../lib/types/complex_types'
 
 # Access types in tests without requiring them.
