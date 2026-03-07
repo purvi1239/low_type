@@ -2,7 +2,7 @@
 
 require_relative '../../lib/low_type'
 
-class Enumerables
+class Arrays
   include LowType
 
   def typed_array_arg(greetings = Array[String])

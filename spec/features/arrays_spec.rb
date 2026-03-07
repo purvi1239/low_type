@@ -2,9 +2,9 @@
 
 require_relative '../../lib/low_type'
 require_relative '../../lib/types/error_types'
-require_relative '../fixtures/enumerables'
+require_relative '../fixtures/arrays'
 
-RSpec.describe Enumerables do
+RSpec.describe Arrays do
   subject(:subject) { described_class.new }
 
   describe '#typed_array_arg' do
