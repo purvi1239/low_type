@@ -26,11 +26,12 @@ module Low
   #      │              │                 │                 │               │
   class Redefiner
     class << self
-      def redefine(method_proxies:, class_proxy:, klass:)
+      # TODO: Pass in "klass" and use it to class_eval/eval methods in the binding of the class that included LowType.
+      def redefine(method_proxies:, class_proxy:)
         if LowType.config.type_checking
-          typed_methods(method_proxies:, class_proxy:, klass:)
+          typed_methods(method_proxies:, class_proxy:)
         else
-          untyped_methods(method_proxies:, class_proxy:, klass:)
+          untyped_methods(method_proxies:, class_proxy:)
         end
       end
 
@@ -51,13 +52,13 @@ module Low
 
       private
 
-      def typed_methods(method_proxies:, class_proxy:, klass:) # rubocop:disable Metrics
+      def typed_methods(method_proxies:, class_proxy:) # rubocop:disable Metrics
         Module.new do
           method_proxies.values.filter(&:expressions?).each do |method_proxy|
             define_method(method_proxy.name) do |*args, **kwargs|
               method_proxy.params_with_expressions.each do |param_proxy|
-                positional = [:pos_req, :pos_opt].include?(param_proxy.type)
-  
+                positional = %i[pos_req pos_opt].include?(param_proxy.type)
+
                 value = positional ? args[param_proxy.position] : kwargs[param_proxy.name]
                 value = param_proxy.expression.default_value if value.nil? && !param_proxy.expression.required?
                 param_proxy.expression.validate!(value:, proxy: param_proxy)
@@ -80,7 +81,7 @@ module Low
         end
       end
 
-      def untyped_methods(method_proxies:, class_proxy:, klass:)
+      def untyped_methods(method_proxies:, class_proxy:)
         Module.new do
           method_proxies.values.filter(&:expressions?).each do |method_proxy|
             # You are now in the binding of the includer class.

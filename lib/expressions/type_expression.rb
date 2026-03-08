@@ -76,7 +76,7 @@ module Low
 
     # Override Expressions as LowType supports complex types which are implemented as values.
     def value?(expression)
-      ::Low::TypeQuery.value?(expression) || expression.nil?
+      TypeQuery.value?(expression) || expression.nil?
     end
 
     def valid_subtype(subtype:)

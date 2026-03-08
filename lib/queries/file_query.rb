@@ -1,11 +1,17 @@
 # frozen_string_literal: true
 
 module Low
+  class MissingFileError < StandardError; end
+
   class FileQuery
     class << self
       def file_path(klass:)
         includer_line = line_from_class(klass:) || line_from_include || ''
-        includer_line.split(':').first || ''
+        file_path = includer_line.split(':').first || ''
+
+        return file_path if File.exist?(file_path)
+
+        raise MissingFileError, "No file found at path '#{file_path}'"
       end
 
       private

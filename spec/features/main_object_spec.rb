@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
-# Comment out and run test individually.
+# This file must be tested manually in order to avoid poisoning the main object in other tests.
+# Comment out the "return" below and run "bundle exec rspec spec/features/main_object_spec.rb".
 return
+
+# rubocop:disable Lint/UnreachableCode
 
 # Including LowType on main object will fuck up other tests!
 require_relative '../fixtures/main_object'
@@ -52,3 +55,5 @@ RSpec.describe 'main object' do
     end
   end
 end
+
+# rubocop:enable Lint/UnreachableCode

@@ -7,6 +7,8 @@ require_relative '../fixtures/return_types'
 RSpec.describe ReturnTypes do
   subject { described_class.new }
 
+  let(:class_proxy) { Lowkey['spec/fixtures/return_types.rb']['ReturnTypes'] }
+
   describe '#return_type' do
     it 'returns a value' do
       expect(subject.return_type).to eq(4)
@@ -14,7 +16,7 @@ RSpec.describe ReturnTypes do
 
     it 'defines return type expression' do
       subject.return_type
-      expect(Lowkey['spec/fixtures/return_types.rb']['ReturnTypes'][:return_type].return_proxy.expression.types).to eq([Integer])
+      expect(class_proxy[:return_type].return_proxy.expression.types).to eq([Integer])
     end
   end
 
@@ -25,14 +27,14 @@ RSpec.describe ReturnTypes do
 
     it 'defines Array[Symmbol] return type expression' do
       subject.array_return_type
-      expect(Lowkey['spec/fixtures/return_types.rb']['ReturnTypes'][:array_return_type].return_proxy.expression.types).to eq([Array[Symbol]])
+      expect(class_proxy[:array_return_type].return_proxy.expression.types).to eq([Array[Symbol]])
     end
   end
 
   describe '#arg_and_return_type' do
     it 'defines return type expression' do
       subject.arg_and_return_type('Morning')
-      expect(Lowkey['spec/fixtures/return_types.rb']['ReturnTypes'][:arg_and_return_type].return_proxy.expression.types).to eq([String])
+      expect(class_proxy[:arg_and_return_type].return_proxy.expression.types).to eq([String])
     end
 
     context 'when the return value is nil' do
@@ -55,7 +57,7 @@ RSpec.describe ReturnTypes do
   describe '#arg_and_nilable_return_value' do
     it 'defines return type expression' do
       expect(subject.arg_and_nilable_return_value(nil)).to eq(nil)
-      expect(Lowkey['spec/fixtures/return_types.rb']['ReturnTypes'][:arg_and_nilable_return_value].return_proxy.expression.types).to eq([String])
+      expect(class_proxy[:arg_and_nilable_return_value].return_proxy.expression.types).to eq([String])
     end
 
     context 'when the return value does not validate the return type expression' do

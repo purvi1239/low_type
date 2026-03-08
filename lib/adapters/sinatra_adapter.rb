@@ -11,9 +11,9 @@ module Low
   module Adapter
     # We don't use https://sinatrarb.com/extensions.html because we need to type check all Ruby methods (not just Sinatra) at a lower level.
     class SinatraAdapter < AdapterInterface
-      def module(file_path:)
+      def module(file_path:) # rubocop:disable Metrics/AbcSize
         Module.new do
-          @@file_path = file_path
+          @@file_path = file_path # rubocop:disable Style/ClassVars
 
           # Unfortunately overriding invoke() is the best way to validate types for now. Though direct it's also very compute efficient.
           # I originally tried an after filter and it mostly worked but it only had access to Response which isn't the raw return value.

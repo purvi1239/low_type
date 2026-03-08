@@ -33,26 +33,21 @@ require_relative 'types/complex_types'
 module LowType
   # We do as much as possible on class load rather than on object instantiation to be thread-safe and efficient.
   def self.included(klass)
-    require_relative 'syntax/union_types' if LowType.config.union_type_expressions
-
     file_path = Low::FileQuery.file_path(klass:)
-    return unless File.exist?(file_path)
-
     file_proxy = Lowkey.load(file_path:)
     class_proxy = file_proxy[klass.name]
 
     Low::Evaluator.evaluate(method_proxies: class_proxy.keyed_methods)
 
     klass.include Low::ExpressionHelpers
+    klass.extend Low::ExpressionHelpers
     klass.extend Low::TypeAccessors
     klass.extend Low::Types
 
-    klass.prepend Low::Redefiner.redefine(method_proxies: class_proxy.instance_methods, class_proxy:, klass:)
-    klass.singleton_class.prepend Low::Redefiner.redefine(method_proxies: class_proxy.class_methods, class_proxy:, klass:)
+    klass.prepend Low::Redefiner.redefine(method_proxies: class_proxy.instance_methods, class_proxy:)
+    klass.singleton_class.prepend Low::Redefiner.redefine(method_proxies: class_proxy.class_methods, class_proxy:)
 
-    if (adapter = Low::Adapter::Loader.load(klass:, class_proxy:))
-      klass.prepend adapter.module(file_path: class_proxy.file_path)
-    end
+    Low::Adapter::Loader.load(klass:, class_proxy:)
   end
 
   class << self

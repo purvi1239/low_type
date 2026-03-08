@@ -25,7 +25,7 @@ module Low
       end
     end
 
-    def type_writer(named_expressions) # rubocop:disable Metrics/AbcSize
+    def type_writer(named_expressions)
       named_expressions.each do |name, expression|
         last_caller = caller_locations(1, 1).first
 
@@ -55,7 +55,7 @@ module Low
     def cast_type_expression(expression)
       if expression.is_a?(::Expressions::Expression)
         expression
-      elsif ::Low::TypeQuery.type?(expression)
+      elsif TypeQuery.type?(expression)
         TypeExpression.new(type: expression)
       end
     end
